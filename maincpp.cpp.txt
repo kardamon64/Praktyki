@@ -1,0 +1,114 @@
+#include <iostream>
+#include <fstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
+#include <math.h>
+#include <filesystem>
+#include <chrono>
+#include <cstdlib>
+#include <vector>
+
+using namespace std;
+namespace fs = std::filesystem;
+using namespace std::chrono;
+
+//FUNKCJA WPISUJE Z PLIKU DO TABLICY UNSIGNED INTÓW 8 BITOWYCH
+uint8_t * read_file(string path)
+{
+    ifstream infile;
+    infile.open(path, ios::binary | ios::in);
+
+    //cout << "File path: " << path << endl;
+
+    if (infile.good() == true)
+    {
+        infile.seekg(0, ios::end);
+        size_t n_bytes = infile.tellg();
+        infile.seekg(0, ios::beg);
+
+        uint8_t* data = new uint8_t[n_bytes];
+        infile.read((char*)data, n_bytes);
+
+            return data;
+
+    }
+    else
+    {
+        cout << "Error while opening file" << endl;
+        exit(0);
+    }
+}
+
+
+bool* into_binary(uint8_t* data, int size)
+{
+    bool* binary = new bool[size * 8];
+
+    for (int i = 0 ; i < size ; i++)
+    {
+        for (int j = 0 ; j < 8 ; j++)
+        {
+            binary[i * 8 + (8-j)] = (data[i] >> j) & 1;
+        }
+    }
+
+    return binary;
+}
+auto frtest(bool *data,int size)
+{
+  auto start = high_resolution_clock::now();
+  double n = size;
+  int Sn=0;
+  for (int i=0;i<n;i++)
+    {
+      if(data[i]==1)
+        Sn++;
+      else
+        Sn--;
+    }
+  double sqrtn=sqrt(n);
+ if (Sn<0)
+   Sn=-Sn;
+  
+  double Sobs= Sn/sqrtn;
+  double pom=sqrt(2);
+  double p=erfc(Sobs/pom);
+
+return p;
+}
+vector<string> make_tab(string path,string ext)
+{
+    vector<string>tab;
+
+    int i=0;
+
+    for (auto &p : fs::recursive_directory_iterator(path))
+    {
+        if (p.path().extension() == ext)
+          tab.push_back(p.path().string());}
+    return tab;
+}
+int main()
+{
+    uint8_t * tab;
+    int size=2048;
+    string path("/home/jlos/kod/tests/");
+    string ext(".bin");
+    vector<string>t= make_tab(path,ext);
+    int ilosc_plikow=10000;
+  
+    for(int i=0;i<ilosc_plikow;i++)
+    {
+    tab=read_file(t[i]);
+    bool *data=into_binary(tab, size);
+    //
+    auto start = high_resolution_clock::now();
+    double wynik=frtest(data,size);
+    auto stop = high_resolution_clock::now();
+    cout<<"Wynik testu:"<< wynik << endl;
+auto duration = duration_cast<microseconds>(stop - start);
+cout << "Zmierzony czas: "<< duration.count() << " microsekundy" << endl;
+
+    return 0;
+}}
